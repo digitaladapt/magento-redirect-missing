@@ -1,0 +1,24 @@
+{
+  "name": "digitaladapt/magento-redirect-missing",
+  "description": "Magento Module to aid development.",
+  "homepage": "https://github.com/digitaladapt/magento-redirect-missing",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Andrew Stowell",
+      "email": "andrew@digitaladapt.com",
+      "homepage": "https://www.digitaladapt.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.1.0",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "files": ["registration.php"],
+    "psr-4": {
+      "DigitalAdapt\\RedirectMissing\\": ""
+    }
+  }
+}

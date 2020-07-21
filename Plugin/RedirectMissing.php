@@ -24,6 +24,7 @@ class RedirectMissing
                 $result->setHeader('Location', "{$settings->redirect}{$_SERVER['REQUEST_URI']}");
             }
         }
+        file_put_contents($this->directory->getRoot() . DIRECTORY_SEPARATOR . 'rm.log', "{$_SERVER['REQUEST_URI']}::{$result->getHttpResponseCode()}\n", FILE_APPEND);
         return $result;
     }
 }

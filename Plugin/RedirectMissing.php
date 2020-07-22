@@ -2,29 +2,41 @@
 
 namespace DigitalAdapt\MagentoRedirectMissing\Plugin;
 
+use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Filesystem\DirectoryList;
 
 class RedirectMissing
 {
+    /** @var ResultFactory */
+    protected $redirect;
+
     /** @var DirectoryList */
     protected $directory;
 
-    public function __construct(DirectoryList $directory)
+    public function __construct(ResultFactory $redirect, DirectoryList $directory)
     {
+        $this->redirect  = $redirect;
         $this->directory = $directory;
     }
 
-    public function afterLunch($result)
+    public function afterExecute($context, $result)
     {
-        if ($result->getHttpResponseCode() === 404) {
-            $settings = json_decode(file_get_contents($this->directory->getRoot() . DIRECTORY_SEPARATOR . 'redirect-missing.json'));
-            if (isset($settings->enabled, $settings->redirect) && $settings->enabled) {
-                $result->setHttpResponseCode(302);
-                $result->setBody('');
-                $result->setHeader('Location', "{$settings->redirect}{$_SERVER['REQUEST_URI']}");
+        if (method_exists($context, 'getResponse')) {
+            /* get the file extension of the uri, will be blank for extensionless filenames, such as directories */
+            $extension = pathinfo(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), PATHINFO_EXTENSION);
+
+            /* if extension doesn't contains "htm" and isn't a blank string (directory) */
+            if (!(stripos($extension, 'htm') !== false || $extension === '')) {
+                /* original plan of checking http status won't work, since it's always 200, even when 404 is sent:
+                 * `$context->getResponse->getHttpResponseCode()` is *always* 200 */
+                $settings = json_decode(file_get_contents($this->directory->getRoot() . DIRECTORY_SEPARATOR . 'redirect-missing.json'));
+                if (isset($settings->enabled, $settings->redirect) && $settings->enabled) {
+                    $redirect = $this->redirect->create(ResultFactory::TYPE_REDIRECT);
+                    $redirect->setUrl($settings->redirect . $_SERVER['REQUEST_URI']);
+                    return $redirect;
+                }
             }
         }
-        file_put_contents($this->directory->getRoot() . DIRECTORY_SEPARATOR . 'rm.log', "{$_SERVER['REQUEST_URI']}::{$result->getHttpResponseCode()}\n", FILE_APPEND);
         return $result;
     }
 }
